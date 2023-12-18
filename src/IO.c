@@ -1,0 +1,247 @@
+#include <unistd.h>
+#include <termios.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include "structs.h"
+
+#define ctrlkey(k) ((k) & 0x1f)
+
+void move_cursor(char c, struct window *win)
+{
+  switch(c) 
+  {
+    // a - up b - down c - left d - right
+    case 'A':
+      {
+        if(win->cy != 1)
+        {
+          win->cy--;
+        }
+        else if(win->row_offset != 0)
+        {
+          win->row_offset--;
+        }
+      } break;
+    case 'B':
+      {
+        if(win->maxy > (win->cy))
+        {
+          win->cy++;
+        }
+        else if((win->row_offset + win->maxy) < (win->lines + 1))
+        {
+          win->row_offset++;
+        }
+      } break;
+    case 'C':
+      {
+        if(win->maxx >= win->cx)
+        win->cx++;
+      } break;
+    case 'D':
+      {
+        if(win->cx != 1)
+        {
+          win->cx--;
+        }
+      }
+  }
+}
+
+void save_file(struct window *win)
+{
+  int fd = open(win->file_name, O_RDWR | O_CREAT, 0664);
+  if(fd == -1)
+  {
+    exit(0);
+  }
+  int length = 0;
+
+  for(int i = 0; i < win->lines; i++)
+  {
+    length += win->linenode[i].length + 1;
+  }
+  char* buffer = malloc(length);
+  char* p = buffer;
+  for(int i = 0; i < win->lines; i++)
+  {
+    memcpy(p, win->linenode[i].string, win->linenode[i].length);
+    p += win->linenode[i].length;
+    *p = '\n';
+    p++;
+    /*printf("   %s   ", win->linenode[i].string);
+    exit(0);*/
+  }
+
+  ftruncate(fd, length);
+  write(fd, buffer, length);
+  close(fd);
+  free(buffer);
+}
+
+int find_not_space(struct window *win, int at)
+{
+  for(int i = 0; i < win->linenode[at].length; i++)
+  {
+    if(win->linenode[at].string[i] != ' ')
+    {
+      return i;
+    }
+    else if (win->linenode[at].length == i) {
+      return win->linenode[at].length;
+    }
+  }
+  return -1;
+}
+
+void process_key(char c, struct window *win)
+{
+  switch(c) 
+  {
+    case ctrlkey('q'):
+      {
+        exit(0);
+      } break;
+    case ctrlkey('s'):
+      {
+        save_file(win);
+      }break;
+    default:
+      {
+        int at = win->cy+win->row_offset - 1;
+        if(win->cx < win->linenode[at].length + 2)
+        {
+          win->linenode[at].string = realloc(win->linenode[at].string, win->linenode[at].length + 2);
+          memmove(&win->linenode[at].string[win->cx], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx + 1);
+          win->linenode[at].length++;
+          win->linenode[at].string[win->cx - 1] = c;
+          win->cx++;
+        }
+      } break;
+    case 127:
+      {
+        int at = win->cy+win->row_offset - 1;
+        if(((win->cx - 1) < win->linenode[at].length) && win->cx != 1 && at < win->lines)
+        {
+          char end;
+          end = win->linenode[at].string[win->linenode[at].length - 1];
+          memmove(&win->linenode[at].string[win->cx - 2], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx);
+          win->linenode[at].length--;
+          win->linenode[at].string[win->linenode[at].length - 1] = end;
+          win->cx--;
+        }
+        else if(((win->cx - 1) == win->linenode[at].length) && win->cx != 1 && at < win->lines)
+        {
+          win->linenode[at].length--;
+          win->cx--;
+        }
+        else if((win->cx == 1) && at != 0 && at < win->lines)
+        {
+          int lengths = win->linenode[at - 1].length + win->linenode[at].length;
+          win->linenode[at - 1].string = realloc(win->linenode[at - 1].string, (win->linenode[at - 1].length + win->linenode[at].length));
+          memmove(&win->linenode[at - 1].string[win->linenode[at - 1].length], &win->linenode[at].string[0], win->linenode[at].length);
+          memmove(&win->linenode[at], &win->linenode[at + 1], sizeof(struct line_node) * (win->lines - at));
+          win->linenode[at - 1].length = lengths;
+          win->lines--;
+          if(win->cy != 0)
+          {
+            win->cy--;
+            win->cx = lengths + 1;
+          }
+          else{
+            win->row_offset--;
+          }
+        }
+      } break;
+    case 13:
+      {
+        if(win->cx - 1  <= win->linenode[(win->cy + win->row_offset) - 1].length && (win->cy + win->row_offset - 1) < win->lines)
+        {
+          int length = win->linenode[win->cy + win->row_offset - 1].length;
+          int at = win->cy + win->row_offset - 1;
+
+          win->linenode = realloc(win->linenode, sizeof(struct line_node) * (win->lines + 1));
+          memmove(&win->linenode[at+1], &win->linenode[at], sizeof(struct line_node) * ((win->lines) - at));
+
+          int index = find_not_space(win, at);
+
+          //the next nodeline
+          win->linenode[at+1].string = malloc((win->linenode[at].length + index) - win->cx);
+          memset(win->linenode[at+1].string, ' ', index);
+          memmove(&win->linenode[at+1].string[index], &win->linenode[at].string[win->cx - 1], (win->linenode[at].length - win->cx) + 1);
+          win->linenode[at+1].length = length - win->cx + index + 1;
+
+          //first nodeline
+          win->linenode[at].length = win->cx-1;
+
+          if(win->cy == win->maxy)
+          {
+            win->row_offset++;
+            win->cx = index;
+          }
+          else {
+            win->cy++;
+            win->cx = index+1;
+          }
+          win->lines++;
+        }
+      } break;
+    case '\x1b':
+      {
+        char buffer[3];
+        if(read(STDIN_FILENO, &buffer[0], 1) != 1)
+        {
+          ;;
+        }
+        if(read(STDIN_FILENO, &buffer[1], 1) != 1)
+        {
+          ;;
+        }
+        if(buffer[0] == '[')
+        {
+          switch(buffer[1])
+          {
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+              {
+                 move_cursor(buffer[1], win);
+              } break;
+          }
+        }
+      }
+  }
+}
+
+void load_file(struct window *win)
+{
+  int file = open(win->file_name, O_RDWR | O_CREAT, 0664);
+  FILE *fd = fopen(win->file_name, "rw");
+
+  char *buffer;
+  size_t bufsize = 0;
+  size_t length = 0;
+  win->lines = 0;
+  while ((length = getline(&buffer, &bufsize, fd)) != -1)
+  {
+    while(length > 0 && (buffer[length - 1] == '\n' || buffer[length - 1] == '\r'))
+      length--;
+    win->linenode = realloc(win->linenode, sizeof(struct line_node) * (win->lines + 1));
+    win->linenode[win->lines].string = malloc(bufsize + 1);
+    win->linenode[win->lines].length = length;
+    memcpy(win->linenode[win->lines].string, buffer, length + 1);
+    win->linenode[win->lines].string[length] = '\0';
+    win->lines++;
+  }
+  if(win->lines == 0)
+  {
+    write(file, "0\n", 2);
+    load_file(win);
+  }
+  close(file);
+  fclose(fd);
+  free(buffer);
+}
