@@ -6,5 +6,6 @@
 
 ## using nedit 
 
-ctrl + q = quit
-ctrl + s = save
+1) ctrl + q = quit
+
+2) ctrl + s = save
