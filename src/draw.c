@@ -38,11 +38,10 @@ void draw(int maxx, int maxy, struct window *win, struct __string *__string)
       //write(STDOUT_FILENO, "-\r\n", 3);
       append_string(__string, "-\r\n", 3);
     }
-    write(STDOUT_FILENO, __string->string, __string->length);
-    __string->length = 0;
   }
 
-
+  write(STDOUT_FILENO, __string->string, __string->length);
+  __string->length = 0;
   /*char test[10];
   sprintf(test, "%d;%d", win->cx, win->cy);
   write(STDOUT_FILENO, &test, strlen(test));*/
