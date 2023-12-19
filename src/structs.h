@@ -23,6 +23,12 @@ struct window
   char* file_name;
 };
 
+struct __string 
+{
+  char* string;
+  int length;
+};
+
 /*
  * editor setup (cursor and window pos) + random shit
 */
@@ -30,13 +36,14 @@ struct window
 void get_cursor_position(int *cx, int *cy);
 void get_window_size(int *maxx, int *maxy);
 int find_not_space(struct window *win, int at);
+void append_string(struct __string *__string, char* _input_string, int _string_length);
 
 
 /*
  * drawing to the screen
 */
 
-void draw(int maxx, int maxy, struct window *win);
+void draw(int maxx, int maxy, struct window *win, struct __string *__string);
 
 /*
  * FILE IO

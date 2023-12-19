@@ -8,6 +8,7 @@ struct termios original;
 struct termios raw;
 
 struct window wc;
+struct __string __string;
 
 #define ctrlkey(k) ((k) & 0x1f)
 
@@ -40,6 +41,7 @@ void init()
   wc.maxy = 0;
   wc.lines = 0;
   wc.row_offset = 0;
+  __string.length = 0;
   get_window_size(&wc.maxx, &wc.maxy);
   write(STDOUT_FILENO, "\x1b[2J\x1b[H", 7);
 }
@@ -55,12 +57,12 @@ int main(int argc, char *argv[])
   wc.file_name = argv[1];
   load_file(&wc);
   write(STDOUT_FILENO, "\x1b[H", 3);
-  draw(wc.maxx, wc.maxy, &wc);
+  draw(wc.maxx, wc.maxy, &wc, &__string);
   char c;
   while(1)
   {
     read(STDIN_FILENO, &c, 1);
     process_key(c, &wc);
-    draw(wc.maxx, wc.maxy, &wc);
+    draw(wc.maxx, wc.maxy, &wc, &__string);
   }
 }

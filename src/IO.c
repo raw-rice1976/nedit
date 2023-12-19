@@ -42,10 +42,10 @@ void move_cursor(char c, struct window *win)
       } break;
     case 'D':
       {
-        if(win->cx != 1)
+  if(win->cx != 1)
         {
           win->cx--;
-        }
+    }
       }
   }
 }
@@ -55,7 +55,7 @@ void save_file(struct window *win)
   int fd = open(win->file_name, O_RDWR | O_CREAT, 0664);
   if(fd == -1)
   {
-    exit(0);
+    (void)exit(0);
   }
   int length = 0;
 
@@ -67,7 +67,7 @@ void save_file(struct window *win)
   char* p = buffer;
   for(int i = 0; i < win->lines; i++)
   {
-    memcpy(p, win->linenode[i].string, win->linenode[i].length);
+    (void)memcpy(p, win->linenode[i].string, win->linenode[i].length);
     p += win->linenode[i].length;
     *p = '\n';
     p++;
@@ -75,10 +75,10 @@ void save_file(struct window *win)
     exit(0);*/
   }
 
-  ftruncate(fd, length);
-  write(fd, buffer, length);
-  close(fd);
-  free(buffer);
+  (void)ftruncate(fd, length);
+  (void)write(fd, buffer, length);
+  (void)close(fd);
+  (void)free(buffer);
 }
 
 int find_not_space(struct window *win, int at)
@@ -114,7 +114,7 @@ void process_key(char c, struct window *win)
         if(win->cx < win->linenode[at].length + 2)
         {
           win->linenode[at].string = realloc(win->linenode[at].string, win->linenode[at].length + 2);
-          memmove(&win->linenode[at].string[win->cx], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx + 1);
+          (void)memmove(&win->linenode[at].string[win->cx], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx + 1);
           win->linenode[at].length++;
           win->linenode[at].string[win->cx - 1] = c;
           win->cx++;
@@ -127,7 +127,7 @@ void process_key(char c, struct window *win)
         {
           char end;
           end = win->linenode[at].string[win->linenode[at].length - 1];
-          memmove(&win->linenode[at].string[win->cx - 2], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx);
+          (void)memmove(&win->linenode[at].string[win->cx - 2], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx);
           win->linenode[at].length--;
           win->linenode[at].string[win->linenode[at].length - 1] = end;
           win->cx--;
@@ -141,8 +141,8 @@ void process_key(char c, struct window *win)
         {
           int lengths = win->linenode[at - 1].length + win->linenode[at].length;
           win->linenode[at - 1].string = realloc(win->linenode[at - 1].string, (win->linenode[at - 1].length + win->linenode[at].length));
-          memmove(&win->linenode[at - 1].string[win->linenode[at - 1].length], &win->linenode[at].string[0], win->linenode[at].length);
-          memmove(&win->linenode[at], &win->linenode[at + 1], sizeof(struct line_node) * (win->lines - at));
+          (void)memmove(&win->linenode[at - 1].string[win->linenode[at - 1].length], &win->linenode[at].string[0], win->linenode[at].length);
+          (void)memmove(&win->linenode[at], &win->linenode[at + 1], sizeof(struct line_node) * (win->lines - at));
           win->linenode[at - 1].length = lengths;
           win->lines--;
           if(win->cy != 0)
@@ -163,14 +163,14 @@ void process_key(char c, struct window *win)
           int at = win->cy + win->row_offset - 1;
 
           win->linenode = realloc(win->linenode, sizeof(struct line_node) * (win->lines + 1));
-          memmove(&win->linenode[at+1], &win->linenode[at], sizeof(struct line_node) * ((win->lines) - at));
+          (void)memmove(&win->linenode[at+1], &win->linenode[at], sizeof(struct line_node) * ((win->lines) - at));
 
           int index = find_not_space(win, at);
 
           //the next nodeline
           win->linenode[at+1].string = malloc((win->linenode[at].length + index) - win->cx);
-          memset(win->linenode[at+1].string, ' ', index);
-          memmove(&win->linenode[at+1].string[index], &win->linenode[at].string[win->cx - 1], (win->linenode[at].length - win->cx) + 1);
+          (void)memset(win->linenode[at+1].string, ' ', index);
+          (void)memmove(&win->linenode[at+1].string[index], &win->linenode[at].string[win->cx - 1], (win->linenode[at].length - win->cx) + 1);
           win->linenode[at+1].length = length - win->cx + index + 1;
 
           //first nodeline
@@ -232,16 +232,16 @@ void load_file(struct window *win)
     win->linenode = realloc(win->linenode, sizeof(struct line_node) * (win->lines + 1));
     win->linenode[win->lines].string = malloc(bufsize + 1);
     win->linenode[win->lines].length = length;
-    memcpy(win->linenode[win->lines].string, buffer, length + 1);
+    (void)memcpy(win->linenode[win->lines].string, buffer, length + 1);
     win->linenode[win->lines].string[length] = '\0';
     win->lines++;
   }
   if(win->lines == 0)
   {
-    write(file, "0\n", 2);
+    (void)write(file, "0\n", 2);
     load_file(win);
   }
-  close(file);
-  fclose(fd);
-  free(buffer);
+  (void)close(file);
+  (void)fclose(fd);
+  (void)free(buffer);
 }
