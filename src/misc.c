@@ -32,6 +32,6 @@ void get_window_size(int *maxx, int *maxy)
 void append_string(struct __string *__string, char* _input_string, int _string_length)
 {
   __string->string = realloc(__string->string, __string->length + _string_length);
-  (void)memcpy(&__string->string[__string->length], _input_string, _string_length);
+  (void)memmove(&__string->string[__string->length], _input_string, _string_length);
   __string->length += _string_length;
 }

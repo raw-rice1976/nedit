@@ -1,3 +1,26 @@
+
+
+
+
+
+
+
+//fuck this nigger shit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include <unistd.h>
 #include <termios.h>
 #include <stdlib.h>
@@ -45,7 +68,7 @@ void move_cursor(char c, struct window *win)
   if(win->cx != 1)
         {
           win->cx--;
-    }
+        }
       }
   }
 }
@@ -93,7 +116,7 @@ int find_not_space(struct window *win, int at)
       return win->linenode[at].length;
     }
   }
-  return -1;
+  return 0;
 }
 
 void process_key(char c, struct window *win)
@@ -161,15 +184,20 @@ void process_key(char c, struct window *win)
         {
           int length = win->linenode[win->cy + win->row_offset - 1].length;
           int at = win->cy + win->row_offset - 1;
+          int index = 0;
 
           win->linenode = realloc(win->linenode, sizeof(struct line_node) * (win->lines + 1));
           (void)memmove(&win->linenode[at+1], &win->linenode[at], sizeof(struct line_node) * ((win->lines) - at));
 
-          int index = find_not_space(win, at);
+
+          index = find_not_space(win, at);
 
           //the next nodeline
           win->linenode[at+1].string = malloc((win->linenode[at].length + index) - win->cx);
-          (void)memset(win->linenode[at+1].string, ' ', index);
+          if(index > 0)
+          {
+            (void)memset(win->linenode[at+1].string, ' ', index);
+          }
           (void)memmove(&win->linenode[at+1].string[index], &win->linenode[at].string[win->cx - 1], (win->linenode[at].length - win->cx) + 1);
           win->linenode[at+1].length = length - win->cx + index + 1;
 
