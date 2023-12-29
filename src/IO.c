@@ -1,26 +1,3 @@
-
-
-
-
-
-
-
-//fuck this nigger shit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #include <unistd.h>
 #include <termios.h>
 #include <stdlib.h>
@@ -266,7 +243,7 @@ void load_file(struct window *win)
   }
   if(win->lines == 0)
   {
-    (void)write(file, "0\n", 2);
+    (void)write(file, " \n", 2);
     load_file(win);
   }
   (void)close(file);
