@@ -57,7 +57,7 @@ void save_file(struct window *win)
   {
     (void)exit(0);
   }
-  int length = 0;
+int length = 0;
 
   for(int i = 0; i < win->lines; i++)
   {
@@ -96,6 +96,37 @@ int find_not_space(struct window *win, int at)
   return 0;
 }
 
+/*
+ * insert_character
+ * inserts a character into a line
+*/
+
+void insert_character(char c, struct window *win)
+{
+  int cur_row = win->cy + win->row_offset - 1;
+  //check if we arent out of bounds of the line node or in a row that doesnt exist
+  if(win->cx < win->linenode[cur_row].length + 2 && cur_row < win->lines)
+  {
+    // increase the actual size of the string 
+    win->linenode[cur_row].string = realloc(win->linenode[cur_row].string, //current string
+                                            win->linenode[cur_row].length + 2); //target size of the string
+
+    //make space between characters for the new one
+    (void)memmove(&win->linenode[cur_row].string[win->cx], 
+                  &win->linenode[cur_row].string[win->cx -1], 
+                  win->linenode[cur_row].length - win->cx + 1);
+
+    //increase the length of the string (of linenode struct)
+    win->linenode[cur_row].length++;
+
+    //insert the character at cursor position x - 1
+    win->linenode[cur_row].string[win->cx - 1] = c;
+
+    //increment the cursor position
+    win->cx++;
+  }
+}
+
 void process_key(char c, struct window *win)
 {
   switch(c) 
@@ -110,15 +141,7 @@ void process_key(char c, struct window *win)
       }break;
     default:
       {
-        int at = win->cy+win->row_offset - 1;
-        if(win->cx < win->linenode[at].length + 2)
-        {
-          win->linenode[at].string = realloc(win->linenode[at].string, win->linenode[at].length + 2);
-          (void)memmove(&win->linenode[at].string[win->cx], &win->linenode[at].string[win->cx - 1], win->linenode[at].length - win->cx + 1);
-          win->linenode[at].length++;
-          win->linenode[at].string[win->cx - 1] = c;
-          win->cx++;
-        }
+        insert_character(c, win);
       } break;
     case 127:
       {

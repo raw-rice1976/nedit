@@ -57,3 +57,4 @@ void load_file(struct window *win);
 */
 
 void process_key(char c, struct window *win);
+void insert_character(char c, struct window *win);
